@@ -24,20 +24,24 @@ impl Snake {
             Direction::Down => {
                 self.body_position
                     .insert(0, Snake::move_down(*current_head));
+                self.body_position.pop();
                 self.current_direction = Direction::Down
             }
             Direction::Right => {
                 self.body_position
                     .insert(0, Snake::move_right(*current_head));
+                self.body_position.pop();
                 self.current_direction = Direction::Right
             }
             Direction::Left => {
                 self.body_position
                     .insert(0, Snake::move_left(*current_head));
+                self.body_position.pop();
                 self.current_direction = Direction::Left
             }
             Direction::Up => {
                 self.body_position.insert(0, Snake::move_up(*current_head));
+                self.body_position.pop();
                 self.current_direction = Direction::Up
             }
         }
@@ -75,13 +79,13 @@ impl Snake {
         Self {
             body_length: 1,
             body_position: body_pos,
-            current_direction: Direction::Right,
+            current_direction: Direction::Down,
         }
     }
 }
 
 impl Snake {
-    fn move_down(current_head: (usize, usize)) -> (usize, usize) {
+    pub fn move_down(current_head: (usize, usize)) -> (usize, usize) {
         let mut new_head: (usize, usize) = (0, 0);
         if current_head.0 == 4 {
             new_head.0 = 0;
@@ -94,7 +98,7 @@ impl Snake {
         }
     }
 
-    fn move_right(current_head: (usize, usize)) -> (usize, usize) {
+    pub fn move_right(current_head: (usize, usize)) -> (usize, usize) {
         let mut new_head: (usize, usize) = (0, 0);
         if current_head.1 == 4 {
             new_head.1 = 0;
@@ -107,7 +111,7 @@ impl Snake {
         }
     }
 
-    fn move_left(current_head: (usize, usize)) -> (usize, usize) {
+    pub fn move_left(current_head: (usize, usize)) -> (usize, usize) {
         let mut new_head: (usize, usize) = (0, 0);
         if current_head.1 == 0 {
             new_head.1 = 4;
@@ -120,7 +124,7 @@ impl Snake {
         }
     }
 
-    fn move_up(current_head: (usize, usize)) -> (usize, usize) {
+    pub fn move_up(current_head: (usize, usize)) -> (usize, usize) {
         let mut new_head: (usize, usize) = (0, 0);
         if current_head.0 == 0 {
             new_head.0 = 4;
