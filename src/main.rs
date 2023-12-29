@@ -5,13 +5,17 @@ mod snake;
 // #[macro_use]
 extern crate alloc;
 
+use rand::rngs::SmallRng;
+use rand::seq::SliceRandom;
+use rand::{Rng, SeedableRng};
+
 use alloc::{
     borrow::ToOwned,
     vec::{self, Vec},
 };
 use core::{
     borrow::{Borrow, BorrowMut},
-    ops::Index,
+    ops::{Index, RangeBounds},
 };
 use cortex_m_rt::entry;
 use embedded_alloc::Heap;
@@ -71,18 +75,13 @@ fn main() -> ! {
         }
         for snake_bits in &snake.body_position {
             default_board[snake_bits.0][snake_bits.1] = 1;
+            default_board = Game::spawn_food(default_board, &snake.body_position);
+            rprintln!("{:#?}", snake.body_position);
         }
-        rprintln!("{:#?}", snake.body_position);
         // rprintln!("{:#?}", default_board);
         display.show(&mut timer, default_board, 1000);
         timer.delay_ms(100u16);
-        default_board = [
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-        ];
+        display.clear()
     }
 }
 
@@ -123,17 +122,31 @@ impl Game {
     }
 
     fn spawn_food(
-        current_board: [[i32; 5]; 5],
-        snake_position: Vec<(usize, usize)>,
-    ) -> [[i32; 5]; 5] {
+        current_board: [[u8; 5]; 5],
+        snake_position: &Vec<(usize, usize)>,
+    ) -> [[u8; 5]; 5] {
         let mut current_board = current_board;
         let mut possible_spawn_locations: Vec<(usize, usize)> = Vec::new();
 
-        possible_spawn_locations = snake_position
-            .into_iter()
-            .filter(|position| current_board.get(index) !current_board.binary_search(position))
-            .collect();
-        let chosen_spawn = possible_spawn_locations.first().unwrap();
+        for (row_id, row) in current_board.iter().enumerate() {
+            for (column_id, column) in row.iter().enumerate() {
+                if u128::from_be((*column).into()) == 0 {
+                    // TODO! Fix spawm locations
+                    rprintln!("NU");
+                    // rprintln!("NU {:#?}, {:#?}{:#?}, {:#?}", row, column);
+                    possible_spawn_locations.push((row_id, column_id))
+                } else {
+                    rprintln!("SEN");
+                    // rprintln!("SEN {:#?}, {:#?}", row, column);
+                    continue;
+                }
+            }
+        }
+
+        let mut small_rng =
+            SmallRng::seed_from_u64(snake_position.last().unwrap().0.try_into().unwrap());
+        possible_spawn_locations.shuffle(&mut small_rng);
+        let chosen_spawn = possible_spawn_locations.first().expect("Failed");
         current_board[chosen_spawn.0][chosen_spawn.1] = 1;
         current_board
     }
