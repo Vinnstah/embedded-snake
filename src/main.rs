@@ -43,46 +43,46 @@ fn main() -> ! {
     let mut timer = Timer::new(board.TIMER0);
 
     let mut display = Display::new(board.display_pins);
-    let mut snake = Snake::new();
     let mut game = Game::new();
+    let mut snake = Snake::new(game);
 
     loop {
         game.current_board = game.default_board;
 
         if !game.food_spawned {
-            game.current_board =
-                Game::spawn_food(&mut game, game.default_board, &snake.body_position);
+            game.current_board = Game::spawn_food(&mut game, &snake.body_positions);
         }
         if let Ok(true) = board.buttons.button_b.is_low() {
             match snake.current_direction {
-                Direction::Down => snake._move(Direction::Right),
-                Direction::Right => snake._move(Direction::Down),
-                Direction::Left => snake._move(Direction::Down),
-                Direction::Up => snake._move(Direction::Right),
-            }
+                Direction::Down => snake._move(Direction::Right).unwrap(),
+                Direction::Right => snake._move(Direction::Down).unwrap(),
+                Direction::Left => snake._move(Direction::Down).unwrap(),
+                Direction::Up => snake._move(Direction::Right).unwrap(),
+            };
         }
         if let Ok(true) = board.buttons.button_a.is_low() {
             match snake.current_direction {
-                Direction::Down => snake._move(Direction::Left),
-                Direction::Right => snake._move(Direction::Up),
-                Direction::Left => snake._move(Direction::Up),
-                Direction::Up => snake._move(Direction::Left),
-            }
+                Direction::Down => snake._move(Direction::Left).unwrap(),
+                Direction::Right => snake._move(Direction::Up).unwrap(),
+                Direction::Left => snake._move(Direction::Up).unwrap(),
+                Direction::Up => snake._move(Direction::Left).unwrap(),
+            };
         }
-        for snake_bits in &snake.body_position {
+        for snake_bits in &snake.body_positions {
             game.current_board[snake_bits.0][snake_bits.1] = 1;
-            // default_board = Game::spawn_food(default_board, &snake.body_position);
-            rprintln!("{:#?}", snake.body_position);
+            // default_board = Game::spawn_food(default_board, &snake.body_positions);
+            rprintln!("{:#?}", snake.body_positions);
         }
         game.current_board[game.food_position.unwrap().0][game.food_position.unwrap().1] = 1;
         display.show(&mut timer, game.current_board, 1000);
         timer.delay_ms(100u16);
         display.clear();
-        snake.body_position = Game::tick(&mut snake).unwrap()
+        snake.body_positions = Game::tick(&game, &mut snake).unwrap()
     }
 }
 
-struct Game {
+#[derive(PartialEq, Copy, Clone)]
+pub struct Game {
     food_spawned: bool,
     food_position: Option<(usize, usize)>,
     current_board: [[u8; 5]; 5],
@@ -111,48 +111,46 @@ impl Game {
             ],
         }
     }
-    fn tick(snake: &mut Snake) -> Option<Vec<(usize, usize)>> {
-        let current_head = snake.body_position.first().unwrap().clone();
-        let mut current_body_position = &mut snake.body_position;
+    fn tick(&self, snake: &mut Snake) -> Option<Vec<(usize, usize)>> {
+        let current_head = snake.body_positions.first().unwrap().clone();
+        let mut current_body_positions = &mut snake.body_positions;
         let mut new_head = (0, 0);
 
         match snake.current_direction {
             Direction::Down => {
-                current_body_position.pop();
                 new_head = Snake::move_down(current_head.to_owned());
-                current_body_position.insert(0, new_head);
-                Some(current_body_position.to_vec())
+                if self.food_position != Some(new_head) {
+                    current_body_positions.pop();
+                }
+                current_body_positions.insert(0, new_head);
+                Some(current_body_positions.to_vec())
             }
             Direction::Up => {
-                current_body_position.pop();
+                current_body_positions.pop();
                 new_head = Snake::move_up(current_head.to_owned());
-                current_body_position.insert(0, new_head);
-                Some(current_body_position.to_vec())
+                current_body_positions.insert(0, new_head);
+                Some(current_body_positions.to_vec())
             }
             Direction::Right => {
-                current_body_position.pop();
+                current_body_positions.pop();
                 new_head = Snake::move_right(current_head.to_owned());
-                current_body_position.insert(0, new_head);
-                Some(current_body_position.to_vec())
+                current_body_positions.insert(0, new_head);
+                Some(current_body_positions.to_vec())
             }
             Direction::Left => {
-                current_body_position.pop();
+                current_body_positions.pop();
                 new_head = Snake::move_left(current_head.to_owned());
-                current_body_position.insert(0, new_head);
-                Some(current_body_position.to_vec())
+                current_body_positions.insert(0, new_head);
+                Some(current_body_positions.to_vec())
             }
         }
     }
 
-    pub fn spawn_food(
-        &mut self,
-        current_board: [[u8; 5]; 5],
-        snake_position: &Vec<(usize, usize)>,
-    ) -> [[u8; 5]; 5] {
-        let mut current_board = current_board;
+    pub fn spawn_food(&mut self, snake_position: &Vec<(usize, usize)>) -> [[u8; 5]; 5] {
+        // let mut current_board = current_board;
         let mut possible_spawn_locations: Vec<(usize, usize)> = Vec::new();
 
-        for (row_id, row) in current_board.iter().enumerate() {
+        for (row_id, row) in self.current_board.iter().enumerate() {
             for (column_id, column) in row.iter().enumerate() {
                 if u128::from_be((*column).into()) == 0 {
                     possible_spawn_locations.push((row_id, column_id))
@@ -168,8 +166,8 @@ impl Game {
         let chosen_spawn = possible_spawn_locations.first().expect("Failed");
         self.food_position = Some(*chosen_spawn);
         self.food_spawned = true;
-        current_board[chosen_spawn.0][chosen_spawn.1] = 1;
-        current_board
+        self.current_board[chosen_spawn.0][chosen_spawn.1] = 1;
+        self.current_board
     }
 
     fn game_over() -> Vec<[[u8; 5]; 5]> {
