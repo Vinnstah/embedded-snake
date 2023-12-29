@@ -42,29 +42,16 @@ fn main() -> ! {
 
     let mut timer = Timer::new(board.TIMER0);
 
-    let mut default_board = [
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-    ];
-
     let mut display = Display::new(board.display_pins);
     let mut snake = Snake::new();
     let mut game = Game::new();
 
     loop {
-        default_board = [
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-        ];
+        game.current_board = game.default_board;
 
         if !game.food_spawned {
-            default_board = Game::spawn_food(&mut game, default_board, &snake.body_position);
+            game.current_board =
+                Game::spawn_food(&mut game, game.default_board, &snake.body_position);
         }
         if let Ok(true) = board.buttons.button_b.is_low() {
             match snake.current_direction {
@@ -83,12 +70,12 @@ fn main() -> ! {
             }
         }
         for snake_bits in &snake.body_position {
-            default_board[snake_bits.0][snake_bits.1] = 1;
+            game.current_board[snake_bits.0][snake_bits.1] = 1;
             // default_board = Game::spawn_food(default_board, &snake.body_position);
             rprintln!("{:#?}", snake.body_position);
         }
-        default_board[game.food_position.unwrap().0][game.food_position.unwrap().1] = 1;
-        display.show(&mut timer, default_board, 1000);
+        game.current_board[game.food_position.unwrap().0][game.food_position.unwrap().1] = 1;
+        display.show(&mut timer, game.current_board, 1000);
         timer.delay_ms(100u16);
         display.clear();
         snake.body_position = Game::tick(&mut snake).unwrap()
@@ -98,7 +85,8 @@ fn main() -> ! {
 struct Game {
     food_spawned: bool,
     food_position: Option<(usize, usize)>,
-    board: [[u8; 5]; 5],
+    current_board: [[u8; 5]; 5],
+    default_board: [[u8; 5]; 5],
 }
 
 impl Game {
@@ -107,7 +95,14 @@ impl Game {
         Self {
             food_spawned: false,
             food_position: None,
-            board: [
+            current_board: [
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+            ],
+            default_board: [
                 [0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0],
