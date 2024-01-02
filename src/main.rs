@@ -73,6 +73,7 @@ fn main() -> ! {
         game.current_board[game.food_position.unwrap().0][game.food_position.unwrap().1] = 1;
         display.show(&mut timer, game.current_board, 800);
         timer.delay_ms(10u16);
+
         match Game::tick(&mut game, &mut snake) {
             Some(body_positions) => snake.body_positions = body_positions,
             None => {
