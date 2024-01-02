@@ -49,6 +49,8 @@ impl Game {
                 new_head = Snake::move_down(current_head.to_owned());
                 if self.food_position != Some(new_head) {
                     current_body_positions.pop();
+                } else if current_body_positions.contains(&new_head) {
+                    return None;
                 } else {
                     self.food_spawned = false;
                     self.food_position = None;
@@ -60,7 +62,9 @@ impl Game {
                 new_head = Snake::move_up(current_head.to_owned());
                 if self.food_position != Some(new_head) {
                     current_body_positions.pop();
-                }  else {
+                } else if current_body_positions.contains(&new_head) {
+                    return None;
+                } else {
                     self.food_spawned = false;
                     self.food_position = None;
                 }
@@ -71,7 +75,9 @@ impl Game {
                 new_head = Snake::move_right(current_head.to_owned());
                 if self.food_position != Some(new_head) {
                     current_body_positions.pop();
-                }  else {
+                } else if current_body_positions.contains(&new_head) {
+                    return None;
+                } else {
                     self.food_spawned = false;
                     self.food_position = None;
                 }
@@ -82,7 +88,9 @@ impl Game {
                 new_head = Snake::move_left(current_head.to_owned());
                 if self.food_position != Some(new_head) {
                     current_body_positions.pop();
-                }  else {
+                } else if current_body_positions.contains(&new_head) {
+                    return None;
+                } else {
                     self.food_spawned = false;
                     self.food_position = None;
                 }
@@ -115,7 +123,7 @@ impl Game {
         self.current_board
     }
 
-    fn game_over() -> Vec<[[u8; 5]; 5]> {
+    pub fn game_over() -> Vec<[[u8; 5]; 5]> {
         let first: [[u8; 5]; 5] = [
             [0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0],

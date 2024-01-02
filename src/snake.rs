@@ -1,9 +1,6 @@
-#![no_main]
-#![no_std]
 use crate::Game;
 use alloc::vec::{self, Vec};
 use microbit::board::Buttons;
-use rtt_target::rprintln;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum Direction {
@@ -27,15 +24,9 @@ impl Snake {
             Direction::Down => {
                 let new_head = Snake::move_down(*current_head);
                 if self.body_positions.contains(&new_head) {
-                    rprintln!("Body positions {:#?}", self.body_positions);
-                    rprintln!("New head {:#?}", new_head);
                     return Err(());
-                    /*
-                    This part does not currently work. Need to implement the logic in `tick` too.
-                    */
                 } else if self.game.food_position == Some(new_head) {
                     self.body_positions.insert(0, new_head);
-
                     return Ok(self.current_direction = Direction::Down);
                 }
                 self.body_positions.insert(0, new_head);

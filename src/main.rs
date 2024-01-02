@@ -1,9 +1,8 @@
 #![no_main]
 #![no_std]
-mod snake;
 mod game;
+mod snake;
 
-// #[macro_use]
 extern crate alloc;
 
 use core::borrow::Borrow;
@@ -24,6 +23,7 @@ use snake::{Direction, Snake};
 
 use crate::game::Game;
 
+// Global allocator to allow for Vec<> usage.
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
@@ -72,9 +72,15 @@ fn main() -> ! {
         }
         game.current_board[game.food_position.unwrap().0][game.food_position.unwrap().1] = 1;
         display.show(&mut timer, game.current_board, 800);
-        timer.delay_ms(100u16);
-        display.clear();
-        snake.body_positions = Game::tick(&mut game, &mut snake).unwrap()
+        timer.delay_ms(10u16);
+        match Game::tick(&mut game, &mut snake) {
+            Some(body_positions) => snake.body_positions = body_positions,
+            None => {
+                for game_over_screen in Game::game_over() {
+                    display.show(&mut timer, game_over_screen, 100)
+                }
+                panic!();
+            }
+        }
     }
 }
-
